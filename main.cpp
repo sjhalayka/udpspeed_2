@@ -5,16 +5,13 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <set>
+#include <map>
 #include <sstream>
-#include <cstring>
-using std::cout;
-using std::endl;
-using std::string;
-using std::istringstream;
-using std::ostringstream;
-using std::ios;
-
 #include <chrono>
+using namespace std;
+
 
 SOCKET udp_socket = INVALID_SOCKET;
 enum program_mode { talk_mode, listen_mode };
@@ -126,9 +123,23 @@ void cleanup(void)
 	WSACleanup();
 }
 
+
+class recv_stats
+{
+public:
+
+	long long unsigned int total_elapsed_ticks = 0;
+	long long unsigned int total_bytes_received = 0;
+	long long unsigned int last_reported_at_ticks = 0;
+	long long unsigned int last_reported_total_bytes_received = 0;
+
+	double record_bps = 0;
+};
+
+
 int main(int argc, char** argv)
 {
-	cout << endl << "udpspeed 1.2 - UDP speed tester" << endl << "Copyright 2002/2018, Shawn Halayka" << endl << endl;
+	cout << endl << "udpspeed_2 1.0 - Multithreaded UDP speed tester" << endl << "Copyright 2021, Shawn Halayka" << endl << endl;
 
 	program_mode mode = listen_mode;
 
@@ -141,7 +152,6 @@ int main(int argc, char** argv)
 	const long unsigned int rx_buf_size = 8196;
 	char rx_buf[8196];
 
-	// initialize winsock and all of the program's options
 	if (!init_options(argc, argv, mode, target_host_string, port_number))
 	{
 		cleanup();
@@ -220,25 +230,23 @@ int main(int argc, char** argv)
 			return 5;
 		}
 
-		//long unsigned int start_loop_ticks = 0;
-		//long unsigned int end_loop_ticks = 0;
-		//long unsigned int elapsed_loop_ticks = 0;
+		//long long unsigned int total_elapsed_ticks = 0;
+		//long long unsigned int total_bytes_received = 0;
+		//long long unsigned int last_reported_at_ticks = 0;
+		//long long unsigned int last_reported_total_bytes_received = 0;
 
-		long long unsigned int total_elapsed_ticks = 0;
-		long long unsigned int total_bytes_received = 0;
-		long long unsigned int last_reported_at_ticks = 0;
-		long long unsigned int last_reported_total_bytes_received = 0;
+		//double record_bps = 0;
 
-		double record_bps = 0;
-		long unsigned int temp_bytes_received = 0;
+		map<string, recv_stats> senders;
 
 		while (1)
 		{
 			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
+			
+			long unsigned int temp_bytes_received = 0;
+			ostringstream oss;
 
-//			start_loop_ticks = GetTickCount();
-
-			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, rx_buf, rx_buf_size, 0, (struct sockaddr*) & their_addr, &addr_len)))
+			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, rx_buf, rx_buf_size, 0, (struct sockaddr*) &their_addr, &addr_len)))
 			{
 				cout << "  Socket error." << endl;
 				cleanup();
@@ -246,36 +254,51 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-				total_bytes_received += temp_bytes_received;
+//				for (map<string, long long unsigned int>::const_iterator ci = senders.begin(); ci != senders.end(); ci++)
+//				{
+
+//				}
+
+//				total_bytes_received += temp_bytes_received;
+
+				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b1 << ".";
+				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b2 << ".";
+				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b3 << ".";
+				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b4;
+
+				senders[oss.str()].total_bytes_received += temp_bytes_received;
 			}
 
 			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
 
 			std::chrono::duration<float, std::milli> elapsed = end_loop_ticks - start_loop_ticks;
 
-			//end_loop_ticks = GetTickCount();
+			senders[oss.str()].total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
 
-			//if (end_loop_ticks < start_loop_ticks)
-			//	elapsed_loop_ticks = MAXDWORD - start_loop_ticks + end_loop_ticks;
-			//else
-			//	elapsed_loop_ticks = end_loop_ticks - start_loop_ticks;
 
-			total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
 
-			if (total_elapsed_ticks >= last_reported_at_ticks + 1000)
+
+
+
+
+
+
+
+
+			if (senders[oss.str()].total_elapsed_ticks >= senders[oss.str()].last_reported_at_ticks + 1000)
 			{
-				long long unsigned int bytes_sent_received_between_reports = total_bytes_received - last_reported_total_bytes_received;
+				long long unsigned int bytes_sent_received_between_reports = senders[oss.str()].total_bytes_received - senders[oss.str()].last_reported_total_bytes_received;
 
-				double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / ((static_cast<double>(total_elapsed_ticks) - static_cast<double>(last_reported_at_ticks)) / 1000.0);
+				double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / ((static_cast<double>(senders[oss.str()].total_elapsed_ticks) - static_cast<double>(senders[oss.str()].last_reported_at_ticks)) / 1000.0);
 
-				if (bytes_per_second > record_bps)
-					record_bps = bytes_per_second;
+				if (bytes_per_second > senders[oss.str()].record_bps)
+					senders[oss.str()].record_bps = bytes_per_second;
 
-				last_reported_at_ticks = total_elapsed_ticks;
-				last_reported_total_bytes_received = total_bytes_received;
+				senders[oss.str()].last_reported_at_ticks = senders[oss.str()].total_elapsed_ticks;
+				senders[oss.str()].last_reported_total_bytes_received = senders[oss.str()].total_bytes_received;
 
 				static const double mbits_factor = 8.0 / (1024.0 * 1024);
-				cout << "  " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << record_bps * mbits_factor << " Mbit/s" << endl;
+				cout << oss.str() << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << senders[oss.str()].record_bps * mbits_factor << " Mbit/s" << endl;
 			}
 		}
 	}
