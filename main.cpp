@@ -230,13 +230,6 @@ int main(int argc, char** argv)
 			return 5;
 		}
 
-		//long long unsigned int total_elapsed_ticks = 0;
-		//long long unsigned int total_bytes_received = 0;
-		//long long unsigned int last_reported_at_ticks = 0;
-		//long long unsigned int last_reported_total_bytes_received = 0;
-
-		//double record_bps = 0;
-
 		map<string, recv_stats> senders;
 
 		while (1)
@@ -254,13 +247,6 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-//				for (map<string, long long unsigned int>::const_iterator ci = senders.begin(); ci != senders.end(); ci++)
-//				{
-
-//				}
-
-//				total_bytes_received += temp_bytes_received;
-
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b1 << ".";
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b2 << ".";
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b3 << ".";
@@ -274,16 +260,6 @@ int main(int argc, char** argv)
 			std::chrono::duration<float, std::milli> elapsed = end_loop_ticks - start_loop_ticks;
 
 			senders[oss.str()].total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
-
-
-
-
-
-
-
-
-
-
 
 			if (senders[oss.str()].total_elapsed_ticks >= senders[oss.str()].last_reported_at_ticks + 1000)
 			{
