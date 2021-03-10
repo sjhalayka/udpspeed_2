@@ -78,8 +78,6 @@ bool init_winsock(void)
 	return true;
 }
 
-
-
 bool init_options(const int& argc, char** argv, enum program_mode& mode, string& target_host_string, long unsigned int& port_number)
 {
 	if (!init_winsock())
@@ -237,7 +235,7 @@ int main(int argc, char** argv)
 			long unsigned int temp_bytes_received = 0;
 			string ip_address;
 			
-			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, &rx_buf[0], rx_buf_size, 0, (struct sockaddr*) &their_addr, &addr_len)))
+			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, &rx_buf[0], rx_buf_size, 0, reinterpret_cast<struct sockaddr*>(&their_addr), &addr_len)))
 			{
 				cout << "  Socket recvfrom error." << endl;
 				cleanup();
@@ -246,10 +244,10 @@ int main(int argc, char** argv)
 			else
 			{
 				ostringstream oss;
-				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b1 << ".";
-				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b2 << ".";
-				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b3 << ".";
-				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b4;
+				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b1) << ".";
+				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b2) << ".";
+				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b3) << ".";
+				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b4);
 
 				ip_address = oss.str();
 				senders[ip_address].total_bytes_received += temp_bytes_received;
@@ -272,6 +270,7 @@ int main(int argc, char** argv)
 				senders[ip_address].last_reported_total_bytes_received = senders[ip_address].total_bytes_received;
 
 				static const double mbits_factor = 8.0 / (1024.0 * 1024.0);
+
 				cout << "  " << ip_address << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << senders[ip_address].record_bps * mbits_factor << " Mbit/s" << endl;
 			}
 		}
