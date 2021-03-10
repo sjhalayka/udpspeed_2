@@ -145,12 +145,9 @@ int main(int argc, char** argv)
 
 	const long unsigned int tx_buf_size = 1450;
 	vector<char> tx_buf(tx_buf_size);
-//	char tx_buf[1450];
 
 	const long unsigned int rx_buf_size = 8196;
 	vector<char> rx_buf(rx_buf_size);
-
-//	char rx_buf[8196];
 
 	if (!init_options(argc, argv, mode, target_host_string, port_number))
 	{
