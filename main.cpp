@@ -20,16 +20,16 @@ enum program_mode { talk_mode, listen_mode };
 void print_usage(void)
 {
 	cout << "  USAGE:" << endl;
-	cout << "    Listen mode:" << endl;
-	cout << "      udpspeed PORT_NUMBER" << endl;
+	cout << "   Receive mode:" << endl;
+	cout << "    udpspeed PORT_NUMBER" << endl;
 	cout << endl;
-	cout << "    Talk mode:" << endl;
-	cout << "      udpspeed TARGET_HOST PORT_NUMBER" << endl;
+	cout << "   Send mode:" << endl;
+	cout << "    udpspeed TARGET_HOST PORT_NUMBER" << endl;
 	cout << endl;
-	cout << "    ie:" << endl;
-	cout << "      Listen mode: udpspeed 1920" << endl;
-	cout << "      Talk mode:   udpspeed www 342" << endl;
-	cout << "      Talk mode:   udpspeed 127.0.0.1 950" << endl;
+	cout << "   ie:" << endl;
+	cout << "    Receive mode: udpspeed 1920" << endl;
+	cout << "    Send mode:    udpspeed www 342" << endl;
+	cout << "    Send mode:    udpspeed 127.0.0.1 950" << endl;
 	cout << endl;
 }
 
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
 	}
 	else if (listen_mode == mode)
 	{
-		cout << "  Listening on UDP port " << port_number << " - CTRL+C to exit." << endl;
+		cout << "  Receiving on UDP port " << port_number << " - CTRL+C to exit." << endl;
 
 		struct sockaddr_in my_addr;
 		struct sockaddr_in their_addr;
@@ -232,7 +232,7 @@ int main(int argc, char** argv)
 		{
 			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
 			
-			long unsigned int temp_bytes_received = 0;
+			int temp_bytes_received = 0;
 			string ip_address;
 			
 			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, &rx_buf[0], rx_buf_size, 0, reinterpret_cast<struct sockaddr*>(&their_addr), &addr_len)))
@@ -254,14 +254,16 @@ int main(int argc, char** argv)
 			}
 
 			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<float, std::milli> elapsed = end_loop_ticks - start_loop_ticks;
-			senders[ip_address].total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
+			std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
+			senders[ip_address].total_elapsed_ticks += static_cast<unsigned long long int>(elapsed.count());
 
-			if (senders[ip_address].total_elapsed_ticks >= senders[ip_address].last_reported_at_ticks + 1000)
+			if (senders[ip_address].total_elapsed_ticks >= senders[ip_address].last_reported_at_ticks + 1000000)
 			{
-				long long unsigned int bytes_sent_received_between_reports = senders[ip_address].total_bytes_received - senders[ip_address].last_reported_total_bytes_received;
+				const long long unsigned int actual_ticks = senders[ip_address].total_elapsed_ticks - senders[ip_address].last_reported_at_ticks;
+				const long long unsigned int bytes_sent_received_between_reports = senders[ip_address].total_bytes_received - senders[ip_address].last_reported_total_bytes_received;
+				const double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / (static_cast<double>(actual_ticks) / 1000000.0);
 
-				double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / ((static_cast<double>(senders[ip_address].total_elapsed_ticks) - static_cast<double>(senders[ip_address].last_reported_at_ticks)) / 1000.0);
+				cout << actual_ticks << endl;
 
 				if (bytes_per_second > senders[ip_address].record_bps)
 					senders[ip_address].record_bps = bytes_per_second;
