@@ -17,9 +17,6 @@ SOCKET udp_socket = INVALID_SOCKET;
 enum program_mode { talk_mode, listen_mode };
 
 
-
-
-
 void print_usage(void)
 {
 	cout << "  USAGE:" << endl;
@@ -139,7 +136,7 @@ public:
 
 int main(int argc, char** argv)
 {
-	cout << endl << "udpspeed_2 1.0 - Multithreaded UDP speed tester" << endl << "Copyright 2021, Shawn Halayka" << endl << endl;
+	cout << endl << "udpspeed_2 1.0 - UDP speed tester" << endl << "Copyright 2021, Shawn Halayka" << endl << endl;
 
 	program_mode mode = listen_mode;
 
@@ -147,10 +144,13 @@ int main(int argc, char** argv)
 	long unsigned int port_number = 0;
 
 	const long unsigned int tx_buf_size = 1450;
-	char tx_buf[1450];
+	vector<char> tx_buf(tx_buf_size);
+//	char tx_buf[1450];
 
 	const long unsigned int rx_buf_size = 8196;
-	char rx_buf[8196];
+	vector<char> rx_buf(rx_buf_size);
+
+//	char rx_buf[8196];
 
 	if (!init_options(argc, argv, mode, target_host_string, port_number))
 	{
@@ -192,11 +192,12 @@ int main(int argc, char** argv)
 
 		while (1)
 		{
-			if (SOCKET_ERROR == (sendto(udp_socket, tx_buf, tx_buf_size, 0, result->ai_addr, sizeof(struct sockaddr))))
+			if (SOCKET_ERROR == (sendto(udp_socket, &tx_buf[0], tx_buf_size, 0, result->ai_addr, sizeof(struct sockaddr))))
 			{
-				cout << " (TX ERR)" << endl;
-
-				break;
+				cout << "  Socket sendto error." << endl;
+				freeaddrinfo(result);
+				cleanup();
+				return 4;
 			}
 		}
 
@@ -237,44 +238,44 @@ int main(int argc, char** argv)
 			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
 			
 			long unsigned int temp_bytes_received = 0;
-			ostringstream oss;
-
-			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, rx_buf, rx_buf_size, 0, (struct sockaddr*) &their_addr, &addr_len)))
+			string ip_address;
+			
+			if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, &rx_buf[0], rx_buf_size, 0, (struct sockaddr*) &their_addr, &addr_len)))
 			{
-				cout << "  Socket error." << endl;
+				cout << "  Socket recvfrom error." << endl;
 				cleanup();
 				return 6;
 			}
 			else
 			{
+				ostringstream oss;
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b1 << ".";
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b2 << ".";
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b3 << ".";
 				oss << (int)their_addr.sin_addr.S_un.S_un_b.s_b4;
 
-				senders[oss.str()].total_bytes_received += temp_bytes_received;
+				ip_address = oss.str();
+				senders[ip_address].total_bytes_received += temp_bytes_received;
 			}
 
 			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
-
 			std::chrono::duration<float, std::milli> elapsed = end_loop_ticks - start_loop_ticks;
+			senders[ip_address].total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
 
-			senders[oss.str()].total_elapsed_ticks += static_cast<unsigned long long>(elapsed.count());
-
-			if (senders[oss.str()].total_elapsed_ticks >= senders[oss.str()].last_reported_at_ticks + 1000)
+			if (senders[ip_address].total_elapsed_ticks >= senders[ip_address].last_reported_at_ticks + 1000)
 			{
-				long long unsigned int bytes_sent_received_between_reports = senders[oss.str()].total_bytes_received - senders[oss.str()].last_reported_total_bytes_received;
+				long long unsigned int bytes_sent_received_between_reports = senders[ip_address].total_bytes_received - senders[ip_address].last_reported_total_bytes_received;
 
-				double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / ((static_cast<double>(senders[oss.str()].total_elapsed_ticks) - static_cast<double>(senders[oss.str()].last_reported_at_ticks)) / 1000.0);
+				double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / ((static_cast<double>(senders[ip_address].total_elapsed_ticks) - static_cast<double>(senders[ip_address].last_reported_at_ticks)) / 1000.0);
 
-				if (bytes_per_second > senders[oss.str()].record_bps)
-					senders[oss.str()].record_bps = bytes_per_second;
+				if (bytes_per_second > senders[ip_address].record_bps)
+					senders[ip_address].record_bps = bytes_per_second;
 
-				senders[oss.str()].last_reported_at_ticks = senders[oss.str()].total_elapsed_ticks;
-				senders[oss.str()].last_reported_total_bytes_received = senders[oss.str()].total_bytes_received;
+				senders[ip_address].last_reported_at_ticks = senders[ip_address].total_elapsed_ticks;
+				senders[ip_address].last_reported_total_bytes_received = senders[ip_address].total_bytes_received;
 
-				static const double mbits_factor = 8.0 / (1024.0 * 1024);
-				cout << oss.str() << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << senders[oss.str()].record_bps * mbits_factor << " Mbit/s" << endl;
+				static const double mbits_factor = 8.0 / (1024.0 * 1024.0);
+				cout << "  " << ip_address << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << senders[ip_address].record_bps * mbits_factor << " Mbit/s" << endl;
 			}
 		}
 	}
