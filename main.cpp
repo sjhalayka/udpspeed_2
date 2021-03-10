@@ -218,14 +218,14 @@ int main(int argc, char** argv)
 		{
 			cout << "  Could not allocate a new socket." << endl;
 			cleanup();
-			return 4;
+			return 5;
 		}
 
 		if (SOCKET_ERROR == bind(udp_socket, (struct sockaddr*) & my_addr, sizeof(struct sockaddr)))
 		{
 			cout << "  Could not bind socket to port " << port_number << "." << endl;
 			cleanup();
-			return 5;
+			return 6;
 		}
 
 		map<string, recv_stats> senders;
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
 			{
 				cout << "  Socket recvfrom error." << endl;
 				cleanup();
-				return 6;
+				return 7;
 			}
 			else
 			{
