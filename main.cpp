@@ -14,7 +14,7 @@ using namespace std;
 
 
 SOCKET udp_socket = INVALID_SOCKET;
-enum program_mode { talk_mode, listen_mode };
+enum program_mode { send_mode, receive_mode };
 
 
 void print_usage(void)
@@ -87,12 +87,12 @@ bool init_options(const int& argc, char** argv, enum program_mode& mode, string&
 
 	if (2 == argc)
 	{
-		mode = listen_mode;
+		mode = receive_mode;
 		port_string = argv[1];
 	}
 	else if (3 == argc)
 	{
-		mode = talk_mode;
+		mode = send_mode;
 		target_host_string = argv[1];
 		port_string = argv[2];
 	}
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 {
 	cout << endl << "udpspeed_2 1.0 - UDP speed tester" << endl << "Copyright 2021, Shawn Halayka" << endl << endl;
 
-	program_mode mode = listen_mode;
+	program_mode mode = receive_mode;
 
 	string target_host_string = "";
 	long unsigned int port_number = 0;
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	if (talk_mode == mode)
+	if (send_mode == mode)
 	{
 		cout << "  Sending on port " << port_number << " - CTRL+C to exit." << endl;
 
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 
 		freeaddrinfo(result);
 	}
-	else if (listen_mode == mode)
+	else if (receive_mode == mode)
 	{
 		cout << "  Receiving on UDP port " << port_number << " - CTRL+C to exit." << endl;
 
