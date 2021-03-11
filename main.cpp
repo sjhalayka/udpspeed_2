@@ -259,7 +259,7 @@ int main(int argc, char** argv)
 				{
 					cout << "  Socket recvfrom error." << endl;
 					cleanup();
-					return 7;
+					return 8;
 				}
 
 				ostringstream oss;
