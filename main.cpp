@@ -273,7 +273,7 @@ int main(int argc, char** argv)
 				senders[ip_address].total_bytes_received += temp_bytes_received;
 			}
 
-			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end(); i++)
+			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end();)
 			{
 				static const unsigned long long int ticks_per_second = 1000000;
 
@@ -303,7 +303,12 @@ int main(int argc, char** argv)
 					else
 					{
 						cout << "  " << i->first << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << i->second.record_bps * mbits_factor << " Mbit/s" << endl;
+						i++;
 					}
+				}
+				else
+				{
+					i++;
 				}
 			}
 		}
