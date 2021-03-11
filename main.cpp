@@ -254,25 +254,27 @@ int main(int argc, char** argv)
 				senders[ip_address].total_bytes_received += temp_bytes_received;
 			}
 
+			map<string, recv_stats>::iterator i = senders.find(ip_address);
+
 			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
-			senders[ip_address].total_elapsed_ticks += static_cast<unsigned long long int>(elapsed.count());
+			i->second.total_elapsed_ticks += static_cast<unsigned long long int>(elapsed.count());
 
-			if (senders[ip_address].total_elapsed_ticks >= senders[ip_address].last_reported_at_ticks + 1000000)
+			if (i->second.total_elapsed_ticks >= i->second.last_reported_at_ticks + 1000000)
 			{
-				const long long unsigned int actual_ticks = senders[ip_address].total_elapsed_ticks - senders[ip_address].last_reported_at_ticks;
-				const long long unsigned int bytes_sent_received_between_reports = senders[ip_address].total_bytes_received - senders[ip_address].last_reported_total_bytes_received;
+				const long long unsigned int actual_ticks = i->second.total_elapsed_ticks - i->second.last_reported_at_ticks;
+				const long long unsigned int bytes_sent_received_between_reports = i->second.total_bytes_received - i->second.last_reported_total_bytes_received;
 				const double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / (static_cast<double>(actual_ticks) / 1000000.0);
 
-				if (bytes_per_second > senders[ip_address].record_bps)
-					senders[ip_address].record_bps = bytes_per_second;
+				if (bytes_per_second > i->second.record_bps)
+					i->second.record_bps = bytes_per_second;
 
-				senders[ip_address].last_reported_at_ticks = senders[ip_address].total_elapsed_ticks;
-				senders[ip_address].last_reported_total_bytes_received = senders[ip_address].total_bytes_received;
+				i->second.last_reported_at_ticks = i->second.total_elapsed_ticks;
+				i->second.last_reported_total_bytes_received = i->second.total_bytes_received;
 
 				static const double mbits_factor = 8.0 / (1024.0 * 1024.0);
 
-				cout << "  " << ip_address << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << senders[ip_address].record_bps * mbits_factor << " Mbit/s" << endl;
+				cout << "  " << ip_address << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << i->second.record_bps * mbits_factor << " Mbit/s" << endl;
 			}
 		}
 	}
