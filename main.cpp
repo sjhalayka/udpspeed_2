@@ -250,6 +250,7 @@ int main(int argc, char** argv)
 				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b4);
 
 				ip_address = oss.str();
+				
 				senders[ip_address].total_bytes_received += temp_bytes_received;
 			}
 
@@ -262,8 +263,6 @@ int main(int argc, char** argv)
 				const long long unsigned int actual_ticks = senders[ip_address].total_elapsed_ticks - senders[ip_address].last_reported_at_ticks;
 				const long long unsigned int bytes_sent_received_between_reports = senders[ip_address].total_bytes_received - senders[ip_address].last_reported_total_bytes_received;
 				const double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / (static_cast<double>(actual_ticks) / 1000000.0);
-
-				cout << actual_ticks << endl;
 
 				if (bytes_per_second > senders[ip_address].record_bps)
 					senders[ip_address].record_bps = bytes_per_second;
