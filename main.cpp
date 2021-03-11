@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 
 			int ret = select(0, &fds, 0, 0, &timeout);
 
-			if (-1 == ret)
+			if (SOCKET_ERROR == ret)
 			{
 				cout << "  Socket select error." << endl;
 				cleanup();
@@ -304,6 +304,7 @@ int main(int argc, char** argv)
 				}
 				else
 				{
+					// Not yet time to print the stats
 					i++;
 				}
 			}
