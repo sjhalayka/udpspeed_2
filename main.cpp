@@ -232,9 +232,6 @@ int main(int argc, char** argv)
 		{
 			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
 
-			int temp_bytes_received = 0;
-			string ip_address;
-
 			// Setup timeval variable
 			timeval timeout;
 			timeout.tv_sec = 0;
@@ -255,6 +252,8 @@ int main(int argc, char** argv)
 			}
 			else if(0 < ret)
 			{
+				int temp_bytes_received = 0;
+
 				if (SOCKET_ERROR == (temp_bytes_received = recvfrom(udp_socket, &rx_buf[0], rx_buf_size, 0, reinterpret_cast<struct sockaddr*>(&their_addr), &addr_len)))
 				{
 					cout << "  Socket recvfrom error." << endl;
@@ -268,9 +267,7 @@ int main(int argc, char** argv)
 				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b3) << ".";
 				oss << static_cast<int>(their_addr.sin_addr.S_un.S_un_b.s_b4);
 
-				ip_address = oss.str();
-
-				senders[ip_address].total_bytes_received += temp_bytes_received;
+				senders[oss.str()].total_bytes_received += temp_bytes_received;
 			}
 
 			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end();)
