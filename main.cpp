@@ -237,8 +237,8 @@ int main(int argc, char** argv)
 
 			// Setup timeval variable
 			timeval timeout;
-			timeout.tv_sec = 1;
-			timeout.tv_usec = 0;
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 250000; // one-quarter of a second
 
 			// Setup fd_set structure
 			fd_set fds;
@@ -293,8 +293,6 @@ int main(int argc, char** argv)
 					i->second.last_reported_at_ticks = i->second.total_elapsed_ticks;
 					i->second.last_reported_total_bytes_received = i->second.total_bytes_received;
 
-					static const double mbits_factor = 8.0 / (1024.0 * 1024.0);
-
 					if (0.0 == bytes_per_second)
 					{
 						cout << "  " << i->first << " -- time out." << endl;
@@ -302,6 +300,8 @@ int main(int argc, char** argv)
 					}
 					else
 					{
+						static const double mbits_factor = 8.0 / (1024.0 * 1024.0);
+
 						cout << "  " << i->first << " -- " << bytes_per_second * mbits_factor << " Mbit/s, Record: " << i->second.record_bps * mbits_factor << " Mbit/s" << endl;
 						i++;
 					}
