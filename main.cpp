@@ -234,7 +234,7 @@ int main(int argc, char** argv)
 			// Setup timeval variable
 			timeval timeout;
 			timeout.tv_sec = 0;
-			timeout.tv_usec = 250000; // one-quarter of a second
+			timeout.tv_usec = 100000; // one-tenth of a second
 
 			// Setup fd_set structure
 			fd_set fds;
@@ -304,7 +304,6 @@ int main(int argc, char** argv)
 				}
 				else
 				{
-					// Not yet time to print the stats
 					i++;
 				}
 			}
