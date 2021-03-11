@@ -256,15 +256,17 @@ int main(int argc, char** argv)
 
 			map<string, recv_stats>::iterator i = senders.find(ip_address);
 
+			static const unsigned long long int ticks_per_second = 1000000;
+
 			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
 			i->second.total_elapsed_ticks += static_cast<unsigned long long int>(elapsed.count());
 
-			if (i->second.total_elapsed_ticks >= i->second.last_reported_at_ticks + 1000000)
+			if (i->second.total_elapsed_ticks >= i->second.last_reported_at_ticks + ticks_per_second)
 			{
 				const long long unsigned int actual_ticks = i->second.total_elapsed_ticks - i->second.last_reported_at_ticks;
 				const long long unsigned int bytes_sent_received_between_reports = i->second.total_bytes_received - i->second.last_reported_total_bytes_received;
-				const double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / (static_cast<double>(actual_ticks) / 1000000.0);
+				const double bytes_per_second = static_cast<double>(bytes_sent_received_between_reports) / (static_cast<double>(actual_ticks) / static_cast<double>(ticks_per_second));
 
 				if (bytes_per_second > i->second.record_bps)
 					i->second.record_bps = bytes_per_second;
