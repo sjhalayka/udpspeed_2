@@ -241,15 +241,15 @@ int main(int argc, char** argv)
 			FD_ZERO(&fds);
 			FD_SET(udp_socket, &fds);
 
-			int ret = select(0, &fds, 0, 0, &timeout);
+			int select_ret = select(0, &fds, 0, 0, &timeout);
 
-			if (SOCKET_ERROR == ret)
+			if (SOCKET_ERROR == select_ret)
 			{
 				cout << "  Socket select error." << endl;
 				cleanup();
 				return 7;
 			}
-			else if(0 < ret)
+			else if(0 < select_ret)
 			{
 				int temp_bytes_received = 0;
 
