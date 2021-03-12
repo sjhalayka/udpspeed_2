@@ -231,12 +231,10 @@ int main(int argc, char** argv)
 		{
 			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
 
-			// Setup timeval variable
 			timeval timeout;
 			timeout.tv_sec = 0;
-			timeout.tv_usec = 100000; // one-tenth of a second
+			timeout.tv_usec = 100000; // one hundred thousand microseconds is one-tenth of a second
 
-			// Setup fd_set structure
 			fd_set fds;
 			FD_ZERO(&fds);
 			FD_SET(udp_socket, &fds);
@@ -269,12 +267,14 @@ int main(int argc, char** argv)
 				senders[oss.str()].total_bytes_received += temp_bytes_received;
 			}
 
-			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end();)
+			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
+
+			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end(); /* iterate i manually in loop body */)
 			{
+				// One million microseconds per second
 				static const unsigned long long int ticks_per_second = 1000000;
 
-				std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
-				std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
 				i->second.total_elapsed_ticks += static_cast<unsigned long long int>(elapsed.count());
 
 				if (i->second.total_elapsed_ticks >= i->second.last_reported_at_ticks + ticks_per_second)
