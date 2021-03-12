@@ -141,10 +141,10 @@ int main(int argc, char** argv)
 	long unsigned int port_number = 0;
 
 	const long unsigned int tx_buf_size = 1450;
-	vector<char> tx_buf(tx_buf_size);
+	vector<char> tx_buf(tx_buf_size, 0);
 
 	const long unsigned int rx_buf_size = 8196;
-	vector<char> rx_buf(rx_buf_size);
+	vector<char> rx_buf(rx_buf_size, 0);
 
 	if (!init_options(argc, argv, mode, target_host_string, port_number))
 	{
@@ -229,7 +229,7 @@ int main(int argc, char** argv)
 
 		while (1)
 		{
-			std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
+			const std::chrono::high_resolution_clock::time_point start_loop_ticks = std::chrono::high_resolution_clock::now();
 
 			timeval timeout;
 			timeout.tv_sec = 0;
@@ -267,8 +267,8 @@ int main(int argc, char** argv)
 				senders[oss.str()].total_bytes_received += temp_bytes_received;
 			}
 
-			std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
+			const std::chrono::high_resolution_clock::time_point end_loop_ticks = std::chrono::high_resolution_clock::now();
+			const std::chrono::duration<float, std::micro> elapsed = end_loop_ticks - start_loop_ticks;
 
 			for (map<string, recv_stats>::iterator i = senders.begin(); i != senders.end(); /* iterate i manually in loop body */)
 			{
